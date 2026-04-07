@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Lọc · Filter · Kênh Tẻ</title>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+
+  #ui-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* GPS + title top */
+  #top-hud {
+    position: absolute;
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 1.5s;
+  }
+  #top-hud.show { opacity: 1; }
+  #top-hud .title {
+    font-size: 1.1rem;
+    letter-spacing: 0.3em;
+    color: #fff;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+  #top-hud .gps {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* Single word */
+  #word-display {
+    position: absolute;
+    bottom: 5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.8rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.8s;
+    white-space: nowrap;
+    text-shadow: 0 0 20px rgba(255,255,255,0.4);
+  }
+  #word-display.show { opacity: 1; }
+
+  /* Scan prompt */
+  #scan-prompt {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    text-transform: uppercase;
+    transition: opacity 1s;
+  }
+  #scan-prompt.hide { opacity: 0; }
+
+  /* Instruction screen */
+  #intro {
+    position: fixed;
+    inset: 0;
+    background: #050508;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 2rem;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  #intro h1 {
+    font-size: 3rem;
+    color: #fff;
+    letter-spacing: 0.3em;
+    font-weight: 400;
+  }
+  #intro .sub {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    line-height: 2;
+  }
+  #intro .gps-intro {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.3);
+  }
+  #start-btn {
+    margin-top: 1rem;
+    padding: 0.9rem 2.5rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: transparent;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  #start-btn:hover {
+    border-color: #fff;
+    box-shadow: 0 0 20px rgba(255,255,255,0.1);
+  }
+  #intro .instruction {
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.12em;
+    line-height: 2;
+  }
+</style>
+</head>
+<body>
+
+<!-- INTRO SCREEN -->
+<div id="intro">
+  <h1>Lọc</h1>
+  <div class="sub">Filter · Strain · Purify<br>Kênh Tẻ · Ho Chi Minh City</div>
+  <div class="gps-intro">10.7539° N · 106.6983° E</div>
+  <button id="start-btn" onclick="startAR()">Point at the print →</button>
+  <div class="instruction">
+    Point your camera at the cyanotype print<br>
+    to activate the canal layer
+  </div>
+</div>
+
+<!-- UI OVERLAY -->
+<div id="ui-overlay">
+  <div id="top-hud">
+    <div class="title">Lọc</div>
+    <div class="gps">10.7539° N · 106.6983° E · Kênh Tẻ · HCMC</div>
+  </div>
+  <div id="word-display"></div>
+  <div id="scan-prompt">Point camera at the cyanotype print</div>
+</div>
+
+<!-- AR SCENE -->
+<a-scene
+  id="ar-scene"
+  mindar-image="imageTargetSrc: ./marker.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;"
+  color-space="sRGB"
+  renderer="colorManagement: true; physicallyCorrectLights: true"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+  style="display:none;">
+
+  <a-assets>
+    <img id="img-fence"   src="./images/IMG_0951.jpg" crossorigin="anonymous">
+    <img id="img-trash"   src="./images/IMG_0937.jpg" crossorigin="anonymous">
+    <img id="img-fabric"  src="./images/IMG_0981.jpg" crossorigin="anonymous">
+    <img id="img-flowers" src="./images/IMG_1012.jpg" crossorigin="anonymous">
+    <img id="img-coconut" src="./images/IMG_0971.jpg" crossorigin="anonymous">
+    <video id="vid-canal" src="./videos/canal_01.mov" crossorigin="anonymous" playsinline loop muted></video>
+  </a-assets>
+
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+  <a-entity mindar-image-target="targetIndex: 0">
+    <!-- Image plane — fills the print area -->
+    <a-plane id="ar-plane"
+      src="#img-fence"
+      position="0 0 0.01"
+      width="1" height="2.5"
+      material="opacity: 0; transparent: true; shader: flat">
+    </a-plane>
+
+    <!-- Video plane — same size, hidden initially -->
+    <a-video id="ar-video"
+      src="#vid-canal"
+      position="0 0 0.02"
+      width="1" height="2.5"
+      material="opacity: 0; transparent: true">
+    </a-video>
+  </a-entity>
+
+</a-scene>
+
+<script>
+const WORDS = ['mesh', 'trash', 'sun', 'inaccessible', 'haunted', 'coconut', 'fabric', 'lọc', 'residue', 'threshold'];
+const IMAGES = ['#img-fence', '#img-trash', '#img-fabric', '#img-flowers', '#img-coconut'];
+
+let arStarted = false;
+let wordInterval, imageInterval;
+let currentImage = 0;
+let targetFound = false;
+
+function startAR() {
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('ar-scene').style.display = 'block';
+
+  const scene = document.getElementById('ar-scene');
+  scene.addEventListener('loaded', () => {
+    const mindarSystem = scene.systems['mindar-image-system'];
+    mindarSystem.start();
+    arStarted = true;
+  });
+
+  setupTargetEvents();
+}
+
+function setupTargetEvents() {
+  const scene = document.getElementById('ar-scene');
+
+  scene.addEventListener('targetFound', () => {
+    targetFound = true;
+    document.getElementById('scan-prompt').classList.add('hide');
+    document.getElementById('top-hud').classList.add('show');
+
+    // Fade in image plane
+    const plane = document.getElementById('ar-plane');
+    fadeEntity(plane, 0, 0.85, 1200);
+
+    // Start image sequence
+    imageInterval = setInterval(() => {
+      currentImage = (currentImage + 1) % IMAGES.length;
+      const isVideo = currentImage === IMAGES.length - 1;
+
+      if (isVideo) {
+        // Switch to video
+        fadeEntity(document.getElementById('ar-plane'), 0.85, 0, 600);
+        const vid = document.getElementById('ar-video');
+        fadeEntity(vid, 0, 0.75, 600);
+        document.getElementById('vid-canal').play();
+      } else {
+        fadeEntity(document.getElementById('ar-video'), 0.75, 0, 400);
+        const plane = document.getElementById('ar-plane');
+        plane.setAttribute('src', IMAGES[currentImage]);
+        fadeEntity(plane, 0, 0.85, 800);
+      }
+    }, 4000);
+
+    // Start word cycle
+    let wi = 0;
+    const wordEl = document.getElementById('word-display');
+    wordInterval = setInterval(() => {
+      wordEl.classList.remove('show');
+      setTimeout(() => {
+        wordEl.textContent = WORDS[wi % WORDS.length];
+        wordEl.classList.add('show');
+        wi++;
+      }, 500);
+    }, 3000);
+  });
+
+  scene.addEventListener('targetLost', () => {
+    targetFound = false;
+    document.getElementById('scan-prompt').classList.remove('hide');
+    document.getElementById('top-hud').classList.remove('show');
+    document.getElementById('word-display').classList.remove('show');
+    clearInterval(imageInterval);
+    clearInterval(wordInterval);
+    document.getElementById('vid-canal').pause();
+  });
+}
+
+function fadeEntity(el, from, to, duration) {
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const val = from + (to - from) * t;
+    el.setAttribute('material', 'opacity', val);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+</script>
+
+</body>
+</html>
