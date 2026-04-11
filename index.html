@@ -195,8 +195,8 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
   device-orientation-permission-ui="enabled: false">
 
   <!-- Camera rig — moves in XY plane for triangle navigation -->
-  <a-entity id="rig" position="0 1 0">
-    <a-camera look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
+  <a-entity id="rig" position="0 0 0">
+    <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
   </a-entity>
 
   <!-- Lighting — cold, alien -->
@@ -210,10 +210,10 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
     Movement: bob (Y) + slow Y rotation
     Feeling: heavy, patient, alive
   -->
-  <a-entity id="coconuts-wrapper" position="0 1 -2.5" visible="false">
+  <a-entity id="coconuts-wrapper" position="0 0 -2.5" visible="false">
     <a-entity animation="property: position; from: 0 -0.15 0; to: 0 0.15 0;
                           dur: 4000; dir: alternate; loop: true; easing: easeInOutSine">
-      <a-gltf-model id="model-coconuts" scale="0.8 0.8 0.8" immersive-model
+      <a-gltf-model id="model-coconuts" scale="0.8 0.8 0.8" position="0 -0.5 0" immersive-model
         animation="property: rotation; from: 0 0 0; to: 0 360 0;
                    dur: 24000; loop: true; easing: linear">
       </a-gltf-model>
@@ -225,10 +225,10 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
     Movement: drift left (X) + gentle rock (Z)
     Feeling: emptied, carried, residue
   -->
-  <a-entity id="shells-wrapper" position="-1.8 -0.8 -2.5" visible="false">
+  <a-entity id="shells-wrapper" position="-1.8 0 -2.5" visible="false">
     <a-entity animation="property: position; from: 0.5 0 0; to: -0.5 0 0;
                           dur: 10000; dir: alternate; loop: true; easing: easeInOutSine">
-      <a-gltf-model id="model-shells" scale="0.8 0.8 0.8" immersive-model
+      <a-gltf-model id="model-shells" scale="0.8 0.8 0.8" position="0 -0.5 0" immersive-model
         animation="property: rotation; from: 0 0 -5; to: 0 0 5;
                    dur: 6000; dir: alternate; loop: true; easing: easeInOutSine">
       </a-gltf-model>
@@ -240,12 +240,12 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
     Movement: sway (X) + rise/fall (Y) compound
     Feeling: caught, suspended, trapped
   -->
-  <a-entity id="trash-wrapper" position="1.8 -0.8 -2.5" visible="false">
+  <a-entity id="trash-wrapper" position="1.8 0 -2.5" visible="false">
     <a-entity animation="property: position; from: -0.35 0 0; to: 0.35 0 0;
                           dur: 3200; dir: alternate; loop: true; easing: easeInOutSine">
       <a-entity animation="property: position; from: 0 -0.15 0; to: 0 0.15 0;
                             dur: 5000; dir: alternate; loop: true; easing: easeInOutSine">
-        <a-gltf-model id="model-trash" scale="0.8 0.8 0.8" immersive-model></a-gltf-model>
+        <a-gltf-model id="model-trash" scale="0.8 0.8 0.8" position="0 -0.5 0" immersive-model></a-gltf-model>
       </a-entity>
     </a-entity>
   </a-entity>
@@ -281,9 +281,9 @@ const POEM_LINES = [
 
 // ── Model config ──────────────────────────────────────────────────────────────
 const MODELS = [
-  { wrapperId: 'coconuts-wrapper', modelId: 'model-coconuts', src: './models/green-coconuts.glb',     worldX:  0,    worldY:  1   },
-  { wrapperId: 'shells-wrapper',   modelId: 'model-shells',   src: './models/shells-along-canal.glb', worldX: -1.8,  worldY: -0.8 },
-  { wrapperId: 'trash-wrapper',    modelId: 'model-trash',    src: './models/trash-bag.glb',          worldX:  1.8,  worldY: -0.8 },
+  { wrapperId: 'coconuts-wrapper', modelId: 'model-coconuts', src: './models/green-coconuts.glb',     worldX:  0,    worldY: 0 },
+  { wrapperId: 'shells-wrapper',   modelId: 'model-shells',   src: './models/shells-along-canal.glb', worldX: -1.8,  worldY: 0 },
+  { wrapperId: 'trash-wrapper',    modelId: 'model-trash',    src: './models/trash-bag.glb',          worldX:  1.8,  worldY: 0 },
 ];
 
 // ── Navigation state ──────────────────────────────────────────────────────────
@@ -291,7 +291,7 @@ const FRICTION   = 0.88;
 const DRAG_SCALE = 0.009;
 
 let camX        =  0;
-let camY        =  1;    // start at top point of triangle
+let camY        =  0;    // start at top point of triangle
 let velX        =  0;
 let velY        =  0;
 let isDragging  = false;
