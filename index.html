@@ -3,87 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Lọc · Filter · Kênh Tẻ</title>
-<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
+<title>Lọc · Kênh Tẻ</title>
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+  body { overflow: hidden; background: #000; font-family: 'Courier New', monospace; touch-action: none; }
 
-  #ui-overlay {
+  /* ── Camera background ── */
+  #camera-bg {
     position: fixed;
     inset: 0;
-    pointer-events: none;
-    z-index: 999;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
   }
 
-  /* GPS + title */
-  #top-hud {
-    position: absolute;
-    top: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-    opacity: 0;
-    transition: opacity 1.5s;
-    white-space: nowrap;
-  }
-  #top-hud.show { opacity: 1; }
-  #top-hud .title {
-    font-size: 2rem;
-    letter-spacing: 0.3em;
-    color: #fff;
-    text-transform: uppercase;
-    margin-bottom: 0.4rem;
-  }
-  #top-hud .gps {
-    font-size: 0.9rem;
-    letter-spacing: 0.15em;
-    color: rgba(255,255,255,0.7);
-  }
-
-  /* Poem canvas — floating words */
-  #poem-canvas {
-    position: absolute;
+  /* ── A-Frame scene (transparent) ── */
+  a-scene {
+    position: fixed;
     inset: 0;
-    overflow: hidden;
+    z-index: 1;
   }
+  .a-canvas { background: transparent !important; }
 
-  .poem-line {
-    position: absolute;
-    font-size: 1rem;
-    letter-spacing: 0.18em;
-    color: rgba(255, 255, 255, 0.88);
-    text-shadow: 0 0 12px rgba(255,255,255,0.3);
-    white-space: nowrap;
-    opacity: 0;
-    animation: drift linear forwards;
-  }
-
-  @keyframes drift {
-    0%   { opacity: 0;    transform: translateX(0); }
-    8%   { opacity: 1; }
-    85%  { opacity: 0.9; }
-    100% { opacity: 0;    transform: translateX(-120vw); }
-  }
-
-  /* Scan prompt */
-  #scan-prompt {
-    position: absolute;
-    bottom: 2.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.55rem;
-    letter-spacing: 0.2em;
-    color: rgba(255,255,255,0.35);
-    text-align: center;
-    text-transform: uppercase;
-    transition: opacity 1s;
-  }
-  #scan-prompt.hide { opacity: 0; }
-
-  /* Intro screen */
+  /* ── Intro ── */
   #intro {
     position: fixed;
     inset: 0;
@@ -92,11 +36,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 200;
     pointer-events: all;
-    padding: 2rem;
-    text-align: center;
     gap: 1.2rem;
+    text-align: center;
+    padding: 2rem;
+    transition: opacity 0.8s;
   }
   #intro h1 {
     font-size: 3.5rem;
@@ -109,15 +54,15 @@
     letter-spacing: 0.2em;
     color: rgba(255,255,255,0.4);
     text-transform: uppercase;
-    line-height: 2.2;
+    line-height: 2.4;
   }
-  #intro .gps-intro {
-    font-size: 0.8rem;
+  #intro .gps {
+    font-size: 0.78rem;
     letter-spacing: 0.15em;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.45);
   }
   #start-btn {
-    margin-top: 0.5rem;
+    margin-top: 0.6rem;
     padding: 0.9rem 2.5rem;
     border: 1px solid rgba(255,255,255,0.3);
     background: transparent;
@@ -131,73 +76,292 @@
     pointer-events: all;
   }
   #start-btn:hover {
-    border-color: #fff;
-    box-shadow: 0 0 20px rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.8);
+    box-shadow: 0 0 24px rgba(255,255,255,0.08);
   }
-  #intro .instruction {
+
+  /* ── Poem overlay ── */
+  #poem-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 1s;
+    pointer-events: none;
+  }
+  #poem-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  #poem-canvas {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .poem-line {
+    position: absolute;
+    font-size: 1rem;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.88);
+    text-shadow: 0 0 14px rgba(255,255,255,0.25);
+    white-space: nowrap;
+    opacity: 0;
+    animation: drift linear forwards;
+  }
+  @keyframes drift {
+    0%   { opacity: 0;   transform: translateX(0); }
+    8%   { opacity: 1; }
+    85%  { opacity: 0.9; }
+    100% { opacity: 0;   transform: translateX(-120vw); }
+  }
+
+  /* ── GPS HUD ── */
+  #top-hud {
+    position: fixed;
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 1.5s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  #top-hud.show { opacity: 1; }
+  #top-hud .title {
+    font-size: 1.6rem;
+    letter-spacing: 0.35em;
+    color: #fff;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+  #top-hud .gps {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.4);
+  }
+
+  /* ── Model UI (label + loading) ── */
+  #model-ui {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+  }
+  #model-label {
+    position: absolute;
+    bottom: 22%;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 0.58rem;
-    color: rgba(255,255,255,0.22);
-    letter-spacing: 0.1em;
-    line-height: 2;
+    letter-spacing: 0.35em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 1.5s;
   }
+  #model-label.show { opacity: 1; }
+  #loading-indicator {
+    position: absolute;
+    bottom: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.5rem;
+    letter-spacing: 0.5em;
+    color: rgba(255,255,255,0.2);
+    opacity: 0;
+    transition: opacity 0.5s;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  #loading-indicator.show { opacity: 1; }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.5; }
+  }
+
+  /* ── Dot indicators ── */
+  #dots {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.55rem;
+    align-items: center;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 1.2s;
+    pointer-events: none;
+  }
+  #dots.show { opacity: 1; }
+  .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    transition: background 0.6s, transform 0.4s;
+  }
+  .dot.active {
+    background: rgba(255,255,255,0.85);
+    transform: scale(1.3);
+  }
+
+  /* ── Swipe hint ── */
+  #swipe-hint {
+    position: fixed;
+    bottom: 3.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.42rem;
+    letter-spacing: 0.3em;
+    color: rgba(255,255,255,0.15);
+    text-transform: uppercase;
+    z-index: 50;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 1.5s;
+  }
+  #swipe-hint.show { opacity: 1; }
 </style>
 </head>
 <body>
 
-<!-- INTRO -->
+<!-- Camera feed -->
+<video id="camera-bg" autoplay playsinline muted></video>
+
+<!-- Intro screen -->
 <div id="intro">
   <h1>Lọc</h1>
-  <div class="sub">Filter · Strain · Purify<br>Kênh Tẻ · Ho Chi Minh City</div>
-  <div class="gps-intro">10.7539° N · 106.6983° E</div>
-  <button id="start-btn" onclick="startAR()">Point at the print →</button>
-  <div class="instruction">
-    Point your camera at the cyanotype print<br>
-    to activate the canal layer
+  <div class="sub">
+    Filter · Strain · Purify<br>
+    Kênh Tẻ · Ho Chi Minh City
   </div>
+  <div class="gps">10.7539° N &nbsp;·&nbsp; 106.6983° E</div>
+  <button id="start-btn" onclick="startExperience()">Enter →</button>
 </div>
 
-<!-- UI OVERLAY -->
-<div id="ui-overlay">
-  <div id="top-hud">
-    <div class="title">Lọc</div>
-    <div class="gps">10.7539° N · 106.6983° E · Kênh Tẻ</div>
-  </div>
+<!-- GPS HUD -->
+<div id="top-hud">
+  <div class="title">Lọc</div>
+  <div class="gps">10.7539° N &nbsp;·&nbsp; 106.6983° E &nbsp;·&nbsp; Kênh Tẻ</div>
+</div>
+
+<!-- Poem overlay — Screen 0 -->
+<div id="poem-overlay">
   <div id="poem-canvas"></div>
-  <div id="scan-prompt">Point camera at the cyanotype print</div>
 </div>
 
-<!-- AR SCENE -->
+<!-- Model UI -->
+<div id="model-ui">
+  <div id="loading-indicator">· · ·</div>
+  <div id="model-label"></div>
+</div>
+
+<!-- Dot navigation -->
+<div id="dots">
+  <div class="dot active"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</div>
+
+<!-- Swipe hint -->
+<div id="swipe-hint">swipe to flow</div>
+
+<!-- A-Frame scene — transparent, always mounted -->
 <a-scene
-  id="ar-scene"
-  mindar-image="imageTargetSrc: ./marker.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;"
-  color-space="sRGB"
-  renderer="colorManagement: true; physicallyCorrectLights: true"
+  embedded
+  renderer="alpha: true; colorManagement: true; physicallyCorrectLights: true"
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false">
 
-  <a-assets>
-    <img id="img-fence"   src="./images/IMG_0951.jpg" crossorigin="anonymous">
-    <img id="img-trash"   src="./images/IMG_0937.jpg" crossorigin="anonymous">
-    <img id="img-fabric"  src="./images/IMG_0981.jpg" crossorigin="anonymous">
-    <img id="img-flowers" src="./images/IMG_1012.jpg" crossorigin="anonymous">
-    <img id="img-coconut" src="./images/IMG_0971.jpg" crossorigin="anonymous">
-  </a-assets>
+  <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
 
-  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <!-- Lighting -->
+  <a-light type="ambient"     color="#ffffff" intensity="1.4"></a-light>
+  <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 2"></a-light>
+  <a-light type="directional" color="#aaccff" intensity="0.4" position="-1 0 1"></a-light>
 
-  <a-entity mindar-image-target="targetIndex: 0">
-    <a-plane id="ar-plane"
-      src="#img-fence"
-      position="0 0 0.01"
-      width="1" height="2.5"
-      material="opacity: 0; transparent: true; shader: flat">
-    </a-plane>
+  <!--
+    Screen 1 — green-coconuts
+    Movement: gentle bob (Y) + slow Y-axis rotation
+    Feeling: heavy, patient, alive
+  -->
+  <a-entity id="coconuts-wrapper" visible="false"
+    animation="property: position; from: 0 -0.25 -2; to: 0 -0.15 -2;
+                dur: 4000; dir: alternate; loop: true; easing: easeInOutSine">
+    <a-gltf-model id="model-coconuts"
+      scale="0.2 0.2 0.2"
+      animation="property: rotation; from: 0 0 0; to: 0 360 0;
+                 dur: 24000; loop: true; easing: linear">
+    </a-gltf-model>
+  </a-entity>
+
+  <!--
+    Screen 2 — shells-along-canal
+    Movement: drift left (X) + gentle rock (Z)
+    Feeling: emptied, carried away, residue
+  -->
+  <a-entity id="shells-wrapper" visible="false"
+    animation="property: position; from: 0.14 -0.2 -2; to: -0.14 -0.2 -2;
+                dur: 10000; dir: alternate; loop: true; easing: easeInOutSine">
+    <a-gltf-model id="model-shells"
+      scale="0.2 0.2 0.2"
+      animation="property: rotation; from: 0 0 -5; to: 0 0 5;
+                 dur: 6000; dir: alternate; loop: true; easing: easeInOutSine">
+    </a-gltf-model>
+  </a-entity>
+
+  <!--
+    Screen 3 — trash-bag
+    Movement: sway (X, outer) + rise/fall (Y, inner)
+    Feeling: caught, suspended, trapped in the filter
+  -->
+  <a-entity id="trash-outer" visible="false"
+    animation="property: position; from: -0.1 -0.25 -2; to: 0.1 -0.25 -2;
+                dur: 3200; dir: alternate; loop: true; easing: easeInOutSine">
+    <a-entity id="trash-inner"
+      animation="property: position; from: 0 -0.06 0; to: 0 0.06 0;
+                 dur: 5000; dir: alternate; loop: true; easing: easeInOutSine">
+      <a-gltf-model id="model-trash" scale="0.2 0.2 0.2"></a-gltf-model>
+    </a-entity>
   </a-entity>
 
 </a-scene>
 
 <script>
-// Word pools — bilingual clusters of 5-6 words
+// ── Screen definitions ──────────────────────────────────────────────────────
+const SCREENS = [
+  {
+    type: 'poem'
+  },
+  {
+    type: 'model',
+    wrapperId: 'coconuts-wrapper',
+    modelId:   'model-coconuts',
+    src:       './models/green-coconuts.glb',
+    label:     'dừa · coconut'
+  },
+  {
+    type: 'model',
+    wrapperId: 'shells-wrapper',
+    modelId:   'model-shells',
+    src:       './models/shells-along-canal.glb',
+    label:     'vỏ · shell'
+  },
+  {
+    type: 'model',
+    wrapperId: 'trash-outer',
+    modelId:   'model-trash',
+    src:       './models/trash-bag.glb',
+    label:     'rác · trash'
+  }
+];
+
 const POEM_LINES = [
   'mesh · lưới · trash · rác · sun',
   'haunted · inaccessible · no way in',
@@ -209,121 +373,197 @@ const POEM_LINES = [
   'residue · threshold · dừa · lọc · trash',
 ];
 
-const IMAGES = ['#img-fence', '#img-trash', '#img-fabric', '#img-flowers', '#img-coconut'];
+// ── State ───────────────────────────────────────────────────────────────────
+let currentScreen   = 0;
+let isTransitioning = false;
+let loadedModels    = {};
+let poemInterval    = null;
+let lineIdx         = 0;
+let touchStartX     = 0;
+let mouseStartX     = 0;
 
-let imageInterval, poemInterval;
-let currentImage = 0;
-let targetFound = false;
-let poemActive = false;
+// ── Entry ───────────────────────────────────────────────────────────────────
+function startExperience() {
+  const intro = document.getElementById('intro');
+  intro.style.opacity = '0';
+  setTimeout(() => intro.style.display = 'none', 800);
 
-function startAR() {
-  document.getElementById('intro').style.display = 'none';
+  startCamera();
 
-  const scene = document.getElementById('ar-scene');
-  if (scene.hasLoaded) {
-    scene.systems['mindar-image-system'].start();
+  setTimeout(() => {
+    document.getElementById('top-hud').classList.add('show');
+    document.getElementById('dots').classList.add('show');
+    document.getElementById('swipe-hint').classList.add('show');
+    goToScreen(0);
+    setupSwipe();
+    preloadModel(1); // start fetching first model silently
+  }, 400);
+}
+
+// ── Camera ──────────────────────────────────────────────────────────────────
+function startCamera() {
+  navigator.mediaDevices
+    .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+    .then(stream => { document.getElementById('camera-bg').srcObject = stream; })
+    .catch(() => {
+      // No camera — black background is fine for desktop/testing
+      document.getElementById('camera-bg').style.display = 'none';
+    });
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function goToScreen(index) {
+  if (index < 0 || index >= SCREENS.length || isTransitioning) return;
+  isTransitioning = true;
+  currentScreen = index;
+
+  updateDots();
+  hideAllModels();
+
+  const screen = SCREENS[index];
+
+  if (screen.type === 'poem') {
+    document.getElementById('poem-overlay').classList.add('active');
+    hideModelUI();
+    startPoem();
   } else {
-    scene.addEventListener('loaded', () => {
-      scene.systems['mindar-image-system'].start();
+    document.getElementById('poem-overlay').classList.remove('active');
+    stopPoem();
+    activateModelScreen(index);
+  }
+
+  setTimeout(() => { isTransitioning = false; }, 900);
+}
+
+function activateModelScreen(index) {
+  const screen = SCREENS[index];
+  const modelId = screen.modelId;
+
+  if (loadedModels[modelId]) {
+    revealModel(index);
+  } else {
+    showLoadingUI();
+    preloadModel(index, () => {
+      // Only reveal if we're still on this screen
+      if (currentScreen === index) revealModel(index);
     });
   }
 
-  setupTargetEvents();
+  // Silently preload the next model
+  if (index + 1 < SCREENS.length) {
+    setTimeout(() => preloadModel(index + 1), 2000);
+  }
 }
 
-function setupTargetEvents() {
-  const scene = document.getElementById('ar-scene');
+// ── Model loading ─────────────────────────────────────────────────────────────
+function preloadModel(index, callback) {
+  if (index <= 0 || index >= SCREENS.length) return;
+  const screen = SCREENS[index];
+  if (!screen.src || loadedModels[screen.modelId]) {
+    if (callback) callback();
+    return;
+  }
 
-  scene.addEventListener('targetFound', () => {
-    targetFound = true;
-    document.getElementById('scan-prompt').classList.add('hide');
-    document.getElementById('top-hud').classList.add('show');
+  const el = document.getElementById(screen.modelId);
+  el.setAttribute('src', screen.src);
+  el.addEventListener('model-loaded', () => {
+    loadedModels[screen.modelId] = true;
+    if (callback) callback();
+  }, { once: true });
+}
 
-    // Fade in first image
-    const plane = document.getElementById('ar-plane');
-    fadeEntity(plane, 0, 0.88, 1200);
+function revealModel(index) {
+  const screen = SCREENS[index];
+  document.getElementById(screen.wrapperId).setAttribute('visible', 'true');
+  document.getElementById('loading-indicator').classList.remove('show');
+  const label = document.getElementById('model-label');
+  label.classList.remove('show');
+  label.textContent = screen.label;
+  setTimeout(() => label.classList.add('show'), 400);
+}
 
-    // Image sequence
-    currentImage = 0;
-    imageInterval = setInterval(() => {
-      currentImage = (currentImage + 1) % IMAGES.length;
-      const plane = document.getElementById('ar-plane');
-      fadeEntity(plane, 0.88, 0, 500);
-      setTimeout(() => {
-        plane.setAttribute('src', IMAGES[currentImage]);
-        fadeEntity(plane, 0, 0.88, 800);
-      }, 600);
-    }, 5000);
-
-    // Poem lines — drift sideways
-    if (!poemActive) {
-      poemActive = true;
-      spawnPoemLine();
-      poemInterval = setInterval(spawnPoemLine, 3500);
-    }
-  });
-
-  scene.addEventListener('targetLost', () => {
-    targetFound = false;
-    document.getElementById('scan-prompt').classList.remove('hide');
-    document.getElementById('top-hud').classList.remove('show');
-    clearInterval(imageInterval);
-    clearInterval(poemInterval);
-    poemActive = false;
-    document.getElementById('poem-canvas').innerHTML = '';
-    const plane = document.getElementById('ar-plane');
-    fadeEntity(plane, 0.88, 0, 600);
+// ── UI helpers ───────────────────────────────────────────────────────────────
+function hideAllModels() {
+  SCREENS.forEach(s => {
+    if (s.wrapperId) document.getElementById(s.wrapperId).setAttribute('visible', 'false');
   });
 }
 
-let lineIndex = 0;
+function hideModelUI() {
+  document.getElementById('loading-indicator').classList.remove('show');
+  const label = document.getElementById('model-label');
+  label.classList.remove('show');
+  label.textContent = '';
+}
+
+function showLoadingUI() {
+  hideModelUI();
+  document.getElementById('loading-indicator').classList.add('show');
+}
+
+function updateDots() {
+  document.querySelectorAll('.dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === currentScreen);
+  });
+}
+
+// ── Poem ──────────────────────────────────────────────────────────────────────
+function startPoem() {
+  if (poemInterval) return;
+  spawnPoemLine();
+  poemInterval = setInterval(spawnPoemLine, 3500);
+}
+
+function stopPoem() {
+  clearInterval(poemInterval);
+  poemInterval = null;
+  document.getElementById('poem-canvas').innerHTML = '';
+}
+
 function spawnPoemLine() {
   const canvas = document.getElementById('poem-canvas');
-  const line = document.createElement('div');
-  line.className = 'poem-line';
+  const line   = document.createElement('div');
+  line.className   = 'poem-line';
+  line.textContent = POEM_LINES[lineIdx % POEM_LINES.length];
+  lineIdx++;
 
-  // Pick line from pool, rotate through
-  line.textContent = POEM_LINES[lineIndex % POEM_LINES.length];
-  lineIndex++;
-
-  // Random vertical position — avoid top HUD and bottom prompt
-  const topPct = 18 + Math.random() * 58;
-  line.style.top = topPct + '%';
-
-  // Start from right edge, drift left
+  line.style.top   = (18 + Math.random() * 58) + '%';
   line.style.right = '-10px';
-  line.style.left = 'auto';
+  line.style.left  = 'auto';
 
-  // Random speed 14–22s
-  const duration = 14 + Math.random() * 8;
-  line.style.animationDuration = duration + 's';
-
-  // Slight opacity variation
-  const opacity = 0.7 + Math.random() * 0.3;
-  line.style.color = `rgba(255,255,255,${opacity})`;
-
-  // Slight size variation
-  const size = 0.85 + Math.random() * 0.35;
-  line.style.fontSize = size + 'rem';
+  const dur = 14 + Math.random() * 8;
+  line.style.animationDuration = dur + 's';
+  line.style.color    = `rgba(255,255,255,${(0.7 + Math.random() * 0.3).toFixed(2)})`;
+  line.style.fontSize = (0.85 + Math.random() * 0.35).toFixed(2) + 'rem';
 
   canvas.appendChild(line);
-
-  // Remove after animation
-  setTimeout(() => {
-    if (line.parentNode) line.parentNode.removeChild(line);
-  }, duration * 1000 + 500);
+  setTimeout(() => { if (line.parentNode) line.parentNode.removeChild(line); }, dur * 1000 + 500);
 }
 
-function fadeEntity(el, from, to, duration) {
-  const start = performance.now();
-  function step(now) {
-    const t = Math.min((now - start) / duration, 1);
-    el.setAttribute('material', 'opacity', from + (to - from) * t);
-    if (t < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
+// ── Swipe ────────────────────────────────────────────────────────────────────
+function setupSwipe() {
+  // Touch
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 45) {
+      document.getElementById('swipe-hint').classList.remove('show');
+      goToScreen(currentScreen + (dx < 0 ? 1 : -1));
+    }
+  }, { passive: true });
+
+  // Mouse (desktop testing)
+  document.addEventListener('mousedown', e => { mouseStartX = e.clientX; });
+  document.addEventListener('mouseup', e => {
+    const dx = e.clientX - mouseStartX;
+    if (Math.abs(dx) > 45) {
+      goToScreen(currentScreen + (dx < 0 ? 1 : -1));
+    }
+  });
 }
 </script>
-
 </body>
 </html>
