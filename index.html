@@ -211,7 +211,7 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
     Feeling: heavy, patient, alive
   -->
   <a-entity id="coconuts-wrapper" position="-3.5 0 -2.5" visible="false">
-    <a-entity animation="property: position; from: 0 -0.4 0; to: 0 -0.1 0;
+    <a-entity animation="property: position; from: 0 -0.15 0; to: 0 0.15 0;
                           dur: 4000; dir: alternate; loop: true; easing: easeInOutSine">
       <a-gltf-model id="model-coconuts" scale="0.8 0.8 0.8" immersive-model
         animation="property: rotation; from: 0 0 0; to: 0 360 0;
@@ -226,7 +226,7 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
     Feeling: emptied, carried, residue
   -->
   <a-entity id="shells-wrapper" position="0 0 -2.5" visible="false">
-    <a-entity animation="property: position; from: 0.5 -0.3 0; to: -0.5 -0.3 0;
+    <a-entity animation="property: position; from: 0.5 0 0; to: -0.5 0 0;
                           dur: 10000; dir: alternate; loop: true; easing: easeInOutSine">
       <a-gltf-model id="model-shells" scale="0.8 0.8 0.8" immersive-model
         animation="property: rotation; from: 0 0 -5; to: 0 0 5;
@@ -241,9 +241,9 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
     Feeling: caught, suspended, trapped
   -->
   <a-entity id="trash-wrapper" position="3.5 0 -2.5" visible="false">
-    <a-entity animation="property: position; from: -0.35 -0.3 0; to: 0.35 -0.3 0;
+    <a-entity animation="property: position; from: -0.35 0 0; to: 0.35 0 0;
                           dur: 3200; dir: alternate; loop: true; easing: easeInOutSine">
-      <a-entity animation="property: position; from: 0 -0.2 0; to: 0 0.2 0;
+      <a-entity animation="property: position; from: 0 -0.15 0; to: 0 0.15 0;
                             dur: 5000; dir: alternate; loop: true; easing: easeInOutSine">
         <a-gltf-model id="model-trash" scale="0.8 0.8 0.8" immersive-model></a-gltf-model>
       </a-entity>
