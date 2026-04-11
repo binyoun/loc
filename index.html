@@ -128,36 +128,6 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
   color: rgba(255,255,255,0.3); line-height: 1.8;
 }
 
-/* Abstract toggle */
-#context details {
-  border-top: 1px solid rgba(255,255,255,0.06);
-  padding-top: 0.8rem; margin-top: 0.3rem;
-}
-#context details summary {
-  font-size: 0.45rem; letter-spacing: 0.25em;
-  color: rgba(255,255,255,0.22); text-transform: uppercase;
-  cursor: pointer; list-style: none; outline: none;
-  user-select: none;
-}
-#context details summary::-webkit-details-marker { display: none; }
-#context details summary::after {
-  content: ' ↓'; opacity: 0.4;
-}
-#context details[open] summary::after {
-  content: ' ↑'; opacity: 0.4;
-}
-#context .abstract-text {
-  margin-top: 0.9rem;
-  font-size: 0.5rem; letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.3); line-height: 2;
-  text-align: left;
-}
-#context .keywords {
-  margin-top: 0.6rem;
-  font-size: 0.44rem; letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.2); line-height: 1.9;
-  font-style: italic;
-}
 #context .acknowledgement {
   margin-top: 0.6rem;
   font-size: 0.44rem; letter-spacing: 0.06em;
@@ -237,16 +207,11 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
   <button id="start-btn" onclick="startExperience()">Enter →</button>
 
   <div id="context">
-    <div class="part-of">Part of</div>
+    <div class="part-of">Non-Traditional Research Output</div>
     <div class="paper-title">Interdisciplinary Weavings: Co-Creating Heritage Narratives at the Tẻ Canal</div>
     <div class="event">28th IFFTI 2026 · RMIT University Vietnam</div>
     <div class="authors">Dr Andrew Stiff · Thierry Bernard · Bin Youn · Dr Rachel Jahja</div>
-    <details>
-      <summary>Abstract</summary>
-      <div class="abstract-text">This paper explores an interdisciplinary methodology for co-creating heritage narratives at the Tẻ Canal in Ho Chi Minh City, Vietnam. Drawing on fashion studies, material culture, photography, and digital humanities, the research brings together four academics from RMIT University Vietnam to investigate how the canal's living heritage — its textures, rhythms, and material flows — can be interpreted, documented, and communicated through collaborative practice. The study positions the Tẻ Canal as a site of entangled cultural memory, where industrial decline, everyday life, and ecological change intersect. Through a series of site visits, material encounters, and media experiments, the team developed a shared methodology grounded in embodied observation, cross-disciplinary dialogue, and speculative making. The paper reflects on the tensions and generative possibilities that emerge when different disciplinary frameworks are applied to the same site simultaneously — including conflicting modes of documentation, competing aesthetic sensibilities, and divergent theoretical orientations. A key output of the research is a set of co-created digital artefacts, including this WebAR experience (Lọc · Filter), that engage directly with material traces found at the canal: fabric remnants, organic debris, and objects left by the water's edge. The project contributes to emerging conversations around interdisciplinary heritage research, site-specific digital practice, and the use of AI-assisted tools in creative academic collaboration.</div>
-      <div class="keywords">Keywords: heritage · interdisciplinary · Tẻ Canal · WebAR · material culture · co-creation · embodied practice · Ho Chi Minh City</div>
-      <div class="acknowledgement">RMIT University Vietnam · College of Design and Social Context · 2025–2026</div>
-    </details>
+    <div class="acknowledgement">RMIT University Vietnam · School of Communication and Design</div>
   </div>
 </div>
 
