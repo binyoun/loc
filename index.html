@@ -17,6 +17,32 @@
     height: 100%;
     object-fit: cover;
     z-index: 0;
+    filter: saturate(0.25) brightness(0.7) hue-rotate(180deg);
+  }
+
+  /* ── Atmosphere overlays ── */
+  #vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center,
+      transparent 30%,
+      rgba(0,0,0,0.5) 70%,
+      rgba(0,0,0,0.85) 100%);
+    z-index: 2;
+    pointer-events: none;
+  }
+  #scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0,0,0,0.07) 3px,
+      rgba(0,0,0,0.07) 4px
+    );
+    z-index: 2;
+    pointer-events: none;
   }
 
   /* ── A-Frame scene (transparent) ── */
@@ -143,27 +169,13 @@
     color: rgba(255,255,255,0.4);
   }
 
-  /* ── Model UI (label + loading) ── */
+  /* ── Model UI (loading only) ── */
   #model-ui {
     position: fixed;
     inset: 0;
     z-index: 20;
     pointer-events: none;
   }
-  #model-label {
-    position: absolute;
-    bottom: 22%;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.58rem;
-    letter-spacing: 0.35em;
-    color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 1.5s;
-  }
-  #model-label.show { opacity: 1; }
   #loading-indicator {
     position: absolute;
     bottom: 22%;
@@ -233,6 +245,10 @@
 <!-- Camera feed -->
 <video id="camera-bg" autoplay playsinline muted></video>
 
+<!-- Atmosphere -->
+<div id="vignette"></div>
+<div id="scanlines"></div>
+
 <!-- Intro screen -->
 <div id="intro">
   <h1>Lọc</h1>
@@ -258,7 +274,6 @@
 <!-- Model UI -->
 <div id="model-ui">
   <div id="loading-indicator">· · ·</div>
-  <div id="model-label"></div>
 </div>
 
 <!-- Dot navigation -->
@@ -281,53 +296,47 @@
 
   <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
 
-  <!-- Lighting -->
-  <a-light type="ambient"     color="#ffffff" intensity="1.4"></a-light>
-  <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 2"></a-light>
-  <a-light type="directional" color="#aaccff" intensity="0.4" position="-1 0 1"></a-light>
+  <!-- Lighting — cold, dramatic, alien -->
+  <a-light type="ambient"     color="#0a0a1a" intensity="2.0"></a-light>
+  <a-light type="directional" color="#4488ff" intensity="2.5" position="1 3 1"></a-light>
+  <a-light type="directional" color="#00ffcc" intensity="0.6" position="-2 -1 2"></a-light>
+  <a-light type="point"       color="#0033ff" intensity="1.2" distance="6" position="0 1 -1"></a-light>
 
   <!--
     Screen 1 — green-coconuts
     Movement: gentle bob (Y) + slow Y-axis rotation
     Feeling: heavy, patient, alive
   -->
+  <!-- Screen 1 — green-coconuts: bob + slow Y rotation -->
   <a-entity id="coconuts-wrapper" visible="false"
-    animation="property: position; from: 0 -0.25 -2; to: 0 -0.15 -2;
+    animation="property: position; from: 0 -0.4 -2.5; to: 0 -0.1 -2.5;
                 dur: 4000; dir: alternate; loop: true; easing: easeInOutSine">
     <a-gltf-model id="model-coconuts"
-      scale="0.2 0.2 0.2"
+      scale="0.8 0.8 0.8"
       animation="property: rotation; from: 0 0 0; to: 0 360 0;
                  dur: 24000; loop: true; easing: linear">
     </a-gltf-model>
   </a-entity>
 
-  <!--
-    Screen 2 — shells-along-canal
-    Movement: drift left (X) + gentle rock (Z)
-    Feeling: emptied, carried away, residue
-  -->
+  <!-- Screen 2 — shells-along-canal: drift left + gentle rock -->
   <a-entity id="shells-wrapper" visible="false"
-    animation="property: position; from: 0.14 -0.2 -2; to: -0.14 -0.2 -2;
+    animation="property: position; from: 0.5 -0.3 -2.5; to: -0.5 -0.3 -2.5;
                 dur: 10000; dir: alternate; loop: true; easing: easeInOutSine">
     <a-gltf-model id="model-shells"
-      scale="0.2 0.2 0.2"
+      scale="0.8 0.8 0.8"
       animation="property: rotation; from: 0 0 -5; to: 0 0 5;
                  dur: 6000; dir: alternate; loop: true; easing: easeInOutSine">
     </a-gltf-model>
   </a-entity>
 
-  <!--
-    Screen 3 — trash-bag
-    Movement: sway (X, outer) + rise/fall (Y, inner)
-    Feeling: caught, suspended, trapped in the filter
-  -->
+  <!-- Screen 3 — trash-bag: sway (X) + rise/fall (Y) compound -->
   <a-entity id="trash-outer" visible="false"
-    animation="property: position; from: -0.1 -0.25 -2; to: 0.1 -0.25 -2;
+    animation="property: position; from: -0.35 -0.3 -2.5; to: 0.35 -0.3 -2.5;
                 dur: 3200; dir: alternate; loop: true; easing: easeInOutSine">
     <a-entity id="trash-inner"
-      animation="property: position; from: 0 -0.06 0; to: 0 0.06 0;
+      animation="property: position; from: 0 -0.2 0; to: 0 0.2 0;
                  dur: 5000; dir: alternate; loop: true; easing: easeInOutSine">
-      <a-gltf-model id="model-trash" scale="0.2 0.2 0.2"></a-gltf-model>
+      <a-gltf-model id="model-trash" scale="0.8 0.8 0.8"></a-gltf-model>
     </a-entity>
   </a-entity>
 
@@ -343,22 +352,19 @@ const SCREENS = [
     type: 'model',
     wrapperId: 'coconuts-wrapper',
     modelId:   'model-coconuts',
-    src:       './models/green-coconuts.glb',
-    label:     'dừa · coconut'
+    src:       './models/green-coconuts.glb'
   },
   {
     type: 'model',
     wrapperId: 'shells-wrapper',
     modelId:   'model-shells',
-    src:       './models/shells-along-canal.glb',
-    label:     'vỏ · shell'
+    src:       './models/shells-along-canal.glb'
   },
   {
     type: 'model',
     wrapperId: 'trash-outer',
     modelId:   'model-trash',
-    src:       './models/trash-bag.glb',
-    label:     'rác · trash'
+    src:       './models/trash-bag.glb'
   }
 ];
 
@@ -476,10 +482,6 @@ function revealModel(index) {
   const screen = SCREENS[index];
   document.getElementById(screen.wrapperId).setAttribute('visible', 'true');
   document.getElementById('loading-indicator').classList.remove('show');
-  const label = document.getElementById('model-label');
-  label.classList.remove('show');
-  label.textContent = screen.label;
-  setTimeout(() => label.classList.add('show'), 400);
 }
 
 // ── UI helpers ───────────────────────────────────────────────────────────────
@@ -491,9 +493,6 @@ function hideAllModels() {
 
 function hideModelUI() {
   document.getElementById('loading-indicator').classList.remove('show');
-  const label = document.getElementById('model-label');
-  label.classList.remove('show');
-  label.textContent = '';
 }
 
 function showLoadingUI() {
