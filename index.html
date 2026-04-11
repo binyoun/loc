@@ -71,12 +71,19 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
   position: fixed; inset: 0;
   background: #050508;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-start;
+  align-items: center; justify-content: space-between;
   z-index: 200; pointer-events: all;
-  gap: 1.1rem; text-align: center;
-  padding: 3rem 2rem 2rem;
+  text-align: center;
+  padding: 2.5rem 2rem 3rem;
   overflow-y: auto;
   transition: opacity 1s;
+}
+#intro-main {
+  display: flex; flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  flex: 1;
+  justify-content: center;
 }
 #intro h1 {
   font-size: 3.5rem; color: #fff;
@@ -106,9 +113,7 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
 /* ── Context block ── */
 #context {
   width: 100%; max-width: 480px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding-top: 1.4rem;
-  display: flex; flex-direction: column; gap: 0.7rem;
+  display: flex; flex-direction: column; gap: 0.6rem;
   text-align: left;
 }
 #context .part-of {
@@ -201,17 +206,19 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
 
 <!-- Intro -->
 <div id="intro">
-  <h1>Lọc</h1>
-  <div class="sub">Filter · Strain · Purify<br>Kênh Tẻ · Ho Chi Minh City</div>
-  <div class="gps">10.7539° N &nbsp;·&nbsp; 106.6983° E</div>
-  <button id="start-btn" onclick="startExperience()">Enter →</button>
-
   <div id="context">
-    <div class="part-of">Non-Traditional Research Output</div>
-    <div class="paper-title">Interdisciplinary Weavings: Co-Creating Heritage Narratives at the Tẻ Canal</div>
+    <div class="part-of">A part of</div>
+    <div class="paper-title">"Interdisciplinary Weavings: Co-Creating Heritage Narratives at the Tẻ Canal"</div>
     <div class="event">28th IFFTI 2026 · RMIT University Vietnam</div>
     <div class="authors">Dr Andrew Stiff · Thierry Bernard · Bin Youn · Dr Rachel Jahja</div>
-    <div class="acknowledgement">RMIT University Vietnam · School of Communication and Design</div>
+    <div class="acknowledgement">School of Communication and Design</div>
+  </div>
+
+  <div id="intro-main">
+    <h1>Lọc</h1>
+    <div class="sub">Filter · Strain · Purify<br>Kênh Tẻ · Ho Chi Minh City</div>
+    <div class="gps">10.7539° N &nbsp;·&nbsp; 106.6983° E</div>
+    <button id="start-btn" onclick="startExperience()">Enter →</button>
   </div>
 </div>
 
