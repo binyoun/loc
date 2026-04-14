@@ -321,10 +321,11 @@ const POEM_LINES = [
 ];
 
 // ── Model config ──────────────────────────────────────────────────────────────
+// Triangle rotated so navigation feels circular, not horizontal
 const MODELS = [
-  { wrapperId: 'coconuts-wrapper', modelId: 'model-coconuts', src: './models/green-coconuts.glb',     worldX:  0,    worldY: 0 },
-  { wrapperId: 'shells-wrapper',   modelId: 'model-shells',   src: './models/shells-along-canal.glb', worldX: -1.8,  worldY: 0 },
-  { wrapperId: 'trash-wrapper',    modelId: 'model-trash',    src: './models/trash-bag.glb',          worldX:  1.8,  worldY: 0 },
+  { wrapperId: 'coconuts-wrapper', modelId: 'model-coconuts', src: './models/green-coconuts.glb',     worldX:  0,     worldY:  1.6 },
+  { wrapperId: 'shells-wrapper',   modelId: 'model-shells',   src: './models/shells-along-canal.glb', worldX: -1.56,  worldY: -0.9 },
+  { wrapperId: 'trash-wrapper',    modelId: 'model-trash',    src: './models/trash-bag.glb',          worldX:  1.56,  worldY: -0.9 },
 ];
 
 // ── Navigation state ──────────────────────────────────────────────────────────
@@ -345,10 +346,11 @@ let hasExplored = false;
 // ── Z oscillation — models surge forward in waves, taking turns ───────────────
 const Z_NEAR  = -0.4;                      // closest: fills screen, transparent
 const Z_FAR   = -5.0;                      // furthest: small, fully opaque
-const SPEED   = 0.65;                      // radians/sec — one cycle ~9.7s
-const TAU3    = (Math.PI * 2) / 3;        // 120° offset between models
-// Coconut starts at Z_NEAR (sin(π/2)=1), others 120° behind
+const SPEED   = 0.52;                      // 20% slower than before (~12s cycle)
+const TAU3    = (Math.PI * 2) / 3;
+// Coconut starts at Z_NEAR; exponent <1 makes wave linger at peak (near/transparent)
 const PHASE   = [Math.PI / 2, Math.PI / 2 + TAU3, Math.PI / 2 + TAU3 * 2];
+const LINGER  = 0.38;                      // power curve: <1 = more time at Z_NEAR
 let nearestModel = 0;
 
 // ── Poem state ────────────────────────────────────────────────────────────────
@@ -409,13 +411,20 @@ function loadModel(index, callback) {
 function applyModelStates() {
   const t = Date.now() / 1000;
   MODELS.forEach((m, i) => {
-    // wave: 0 = Z_FAR (far, opaque), 1 = Z_NEAR (close, transparent)
-    const wave    = (Math.sin(t * SPEED + PHASE[i]) + 1) / 2;
+    // Raw sine 0→1; power curve biases toward 1 so model lingers near camera
+    const base    = (Math.sin(t * SPEED + PHASE[i]) + 1) / 2;
+    const wave    = Math.pow(base, LINGER);
     const z       = Z_FAR + (Z_NEAR - Z_FAR) * wave;
     const opacity = Math.max(0.04, 1.0 - wave * 0.96);
 
+    // Slow elliptical XY drift — different frequency per axis, per model
+    // Creates 3D helical path: water flowing in a current, not a straight line
+    const ox = Math.sin(t * 0.21 + PHASE[i])       * 0.32;
+    const oy = Math.cos(t * 0.16 + PHASE[i] + 1.2) * 0.24;
+
     const wrapper = document.getElementById(m.wrapperId);
-    if (wrapper) wrapper.setAttribute('position', `${m.worldX} ${m.worldY} ${z.toFixed(3)}`);
+    if (wrapper) wrapper.setAttribute('position',
+      `${(m.worldX + ox).toFixed(3)} ${(m.worldY + oy).toFixed(3)} ${z.toFixed(3)}`);
 
     const comp = document.getElementById(m.modelId)?.components['immersive-model'];
     if (comp) comp.setOpacity(opacity);
@@ -423,7 +432,7 @@ function applyModelStates() {
 }
 
 // ── Liquid navigation loop — 2D triangle space ────────────────────────────────
-const BOUNDS = { xMin: -2.2, xMax: 2.2, yMin: -1.2, yMax: 1.4 };
+const BOUNDS = { xMin: -2.0, xMax: 2.0, yMin: -1.4, yMax: 2.0 };
 
 function tick() {
   if (!isDragging) {
