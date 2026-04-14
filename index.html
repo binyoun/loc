@@ -258,7 +258,7 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
     Movement: bob (Y) + slow Y rotation
     Feeling: heavy, patient, alive
   -->
-  <a-entity id="coconuts-wrapper" position="0 0 -2.5" visible="false">
+  <a-entity id="coconuts-wrapper" position="0 0 -5.0" visible="false">
     <a-entity animation="property: position; from: 0 -0.15 0; to: 0 0.15 0;
                           dur: 4000; dir: alternate; loop: true; easing: easeInOutSine">
       <a-gltf-model id="model-coconuts" scale="0.8 0.8 0.8" position="0 -0.5 0" immersive-model
@@ -273,7 +273,7 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
     Movement: drift left (X) + gentle rock (Z)
     Feeling: emptied, carried, residue
   -->
-  <a-entity id="shells-wrapper" position="-1.8 0 -2.5" visible="false">
+  <a-entity id="shells-wrapper" position="-1.8 0 -5.0" visible="false">
     <a-entity animation="property: position; from: 0.5 0 0; to: -0.5 0 0;
                           dur: 10000; dir: alternate; loop: true; easing: easeInOutSine">
       <a-gltf-model id="model-shells" scale="0.8 0.8 0.8" position="0 -0.5 0" immersive-model
@@ -288,7 +288,7 @@ a-scene { position: fixed; inset: 0; z-index: 1; }
     Movement: sway (X) + rise/fall (Y) compound
     Feeling: caught, suspended, trapped
   -->
-  <a-entity id="trash-wrapper" position="1.8 0 -2.5" visible="false">
+  <a-entity id="trash-wrapper" position="1.8 0 -5.0" visible="false">
     <a-entity animation="property: position; from: -0.35 0 0; to: 0.35 0 0;
                           dur: 3200; dir: alternate; loop: true; easing: easeInOutSine">
       <a-entity animation="property: position; from: 0 -0.15 0; to: 0 0.15 0;
@@ -342,14 +342,14 @@ let lastDeltaX  = 0;
 let lastDeltaY  = 0;
 let hasExplored = false;
 
-// ── Pull state — 2-finger hold moves nearest model forward ────────────────────
-const BASE_Z       = -2.5;   // world Z all models rest at
-const PULL_Z       =  2.2;   // how far forward the pulled model travels
-const RECEDE_Z     = -0.5;   // how far others step back
-const modelZTarget  = [0, 0, 0];
-const modelZCurrent = [0, 0, 0];
-let isPulling      = false;
-let nearestModel   = 0;
+// ── Z oscillation — models surge forward in waves, taking turns ───────────────
+const Z_NEAR  = -0.4;                      // closest: fills screen, transparent
+const Z_FAR   = -5.0;                      // furthest: small, fully opaque
+const SPEED   = 0.65;                      // radians/sec — one cycle ~9.7s
+const TAU3    = (Math.PI * 2) / 3;        // 120° offset between models
+// Coconut starts at Z_NEAR (sin(π/2)=1), others 120° behind
+const PHASE   = [Math.PI / 2, Math.PI / 2 + TAU3, Math.PI / 2 + TAU3 * 2];
+let nearestModel = 0;
 
 // ── Poem state ────────────────────────────────────────────────────────────────
 let lineIdx      = 0;
@@ -405,19 +405,19 @@ function loadModel(index, callback) {
   }
 }
 
-// ── Pull: move models in Z + drive opacity ────────────────────────────────────
+// ── Z oscillation: each model surges forward on its own wave ──────────────────
 function applyModelStates() {
+  const t = Date.now() / 1000;
   MODELS.forEach((m, i) => {
-    modelZCurrent[i] += (modelZTarget[i] - modelZCurrent[i]) * 0.07;
+    // wave: 0 = Z_FAR (far, opaque), 1 = Z_NEAR (close, transparent)
+    const wave    = (Math.sin(t * SPEED + PHASE[i]) + 1) / 2;
+    const z       = Z_FAR + (Z_NEAR - Z_FAR) * wave;
+    const opacity = Math.max(0.04, 1.0 - wave * 0.96);
 
-    // Update wrapper Z position
     const wrapper = document.getElementById(m.wrapperId);
-    if (wrapper) wrapper.setAttribute('position', `${m.worldX} ${m.worldY} ${(BASE_Z + modelZCurrent[i]).toFixed(3)}`);
+    if (wrapper) wrapper.setAttribute('position', `${m.worldX} ${m.worldY} ${z.toFixed(3)}`);
 
-    // Opacity: transparent as model approaches camera (positive Z offset)
-    const t       = Math.max(0, modelZCurrent[i]) / PULL_Z;
-    const opacity = Math.max(0.06, 1.0 - t * 0.94);
-    const comp    = document.getElementById(m.modelId)?.components['immersive-model'];
+    const comp = document.getElementById(m.modelId)?.components['immersive-model'];
     if (comp) comp.setOpacity(opacity);
   });
 }
@@ -453,21 +453,14 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
-// ── Touch: drag (1 finger) + pull-forward (2 fingers) ────────────────────────
+// ── Touch: 1-finger drag to explore XY triangle ──────────────────────────────
 function setupTouch() {
   document.addEventListener('touchstart', e => {
-    if (e.touches.length === 1 && !isPulling) {
+    if (e.touches.length === 1) {
       lastTouchX = e.touches[0].clientX;
       lastTouchY = e.touches[0].clientY;
       lastDeltaX = 0; lastDeltaY = 0;
       isDragging = true;
-    } else if (e.touches.length === 2) {
-      // 2 fingers: pull nearest model forward, others recede
-      isDragging = false;
-      isPulling  = true;
-      MODELS.forEach((_, i) => {
-        modelZTarget[i] = i === nearestModel ? PULL_Z : RECEDE_Z;
-      });
     }
   }, { passive: true });
 
@@ -488,12 +481,7 @@ function setupTouch() {
     }
   }, { passive: true });
 
-  document.addEventListener('touchend', e => {
-    if (isPulling && e.touches.length < 2) {
-      isPulling = false;
-      modelZTarget[0] = modelZTarget[1] = modelZTarget[2] = 0;
-      return;
-    }
+  document.addEventListener('touchend', () => {
     if (isDragging) {
       isDragging = false;
       velX = -lastDeltaX * DRAG_SCALE * 1.2;
@@ -505,7 +493,7 @@ function setupTouch() {
 // ── Poem ──────────────────────────────────────────────────────────────────────
 function startPoem() {
   spawnPoemLine();
-  poemInterval = setInterval(spawnPoemLine, 3800);
+  poemInterval = setInterval(spawnPoemLine, 2400);
 }
 
 function spawnPoemLine() {
