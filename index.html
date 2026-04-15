@@ -415,7 +415,8 @@ function applyModelStates() {
     const base    = (Math.sin(t * SPEED + PHASE[i]) + 1) / 2;
     const wave    = Math.pow(base, LINGER);
     const z       = Z_FAR + (Z_NEAR - Z_FAR) * wave;
-    const opacity = Math.max(0.04, 1.0 - wave * 0.96);
+    // Opacity: 1.0 when far, 0.42 at closest — keeps color + structure visible
+    const opacity = 0.42 + (1.0 - wave) * 0.58;
 
     // Slow elliptical XY drift — different frequency per axis, per model
     // Creates 3D helical path: water flowing in a current, not a straight line
